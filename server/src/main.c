@@ -12,7 +12,24 @@
 int nb_players = 0;
 
 void* pthreadplayer (void* arg) {
-     printf("Je suis dans le thread\n");
+
+    int client_fd = (long int) arg;
+
+    /* reception du nom du player et envoi du message de bienvenue */
+    char player[BUFSIZ]; memset(player, 0, BUFSIZ);
+    int reponse_length = recv(client_fd, player, sizeof(player), 0); perror("recv name player ");
+        if (reponse_length <= 0) { close(client_fd); perror ("close ");
+        printf("Joueur %s s'est déconnecté :)\n", player);
+        nb_players--;
+        return NULL; }
+     printf("Joueur %s s'est connecté :)\n", player);
+
+    char welcome[BUFSIZ*2]; memset(welcome, 0 , BUFSIZ*2);
+    sprintf(welcome, "Dresseur %s, Bienvenue dans l'arène Pokemon!\n", player);
+    int error = send(client_fd, welcome, strlen(welcome) -1, 0); perror("send welcome ");
+    if (error == -1) { close(client_fd); return NULL; }
+
+    return NULL;
 }
 
 int main () {
@@ -58,6 +75,7 @@ int main () {
         printf("Joueurs connectés : %d\n", nb_players);
         pthread_create(&thread, NULL, pthreadplayer, (void*)client_fd); perror("pthread_create ");
         printf("Thread starts...\n");
+        nb_players = 0;
     }
 
 }   
